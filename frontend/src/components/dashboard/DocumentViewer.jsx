@@ -192,52 +192,58 @@ const DocumentViewer = ({ isOpen, onClose, document, token, API_URL, onShare, on
           className="relative w-full max-w-5xl h-[85vh] bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-white/10"
         >
           {/* Header */}
-          <div className="p-6 bg-slate-900 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-600/10 text-primary-500 rounded-2xl flex items-center justify-center">
-                <FileText size={24} />
+          <div className="p-5 sm:p-6 bg-slate-900 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-600/10 text-primary-500 rounded-2xl flex items-center justify-center shrink-0">
+                <FileText size={20} className="sm:w-[24px] sm:h-[24px]" />
               </div>
-              <div>
-                <h3 className="font-bold text-lg text-white truncate max-w-md">{document.name}</h3>
-                <p className="text-xs text-slate-500 font-medium">
+              <div className="min-w-0">
+                <h3 className="font-bold text-base sm:text-lg text-white truncate max-w-[150px] xs:max-w-[200px] sm:max-w-xs md:max-w-md" title={document.name}>
+                  {document.name}
+                </h3>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5">
                   Uploaded on {new Date(document.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
               <button
                 onClick={toggleStar}
-                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all border ${
+                className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition-all border shrink-0 ${
                   isStarred 
                     ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' 
                     : 'bg-white/5 border-white/10 text-slate-400 hover:text-amber-500'
                 }`}
                 title={isStarred ? "Remove from Favorites" : "Add to Favorites"}
               >
-                <Star size={18} fill={isStarred ? "currentColor" : "none"} />
+                <Star size={16} className="sm:w-[18px] sm:h-[18px]" fill={isStarred ? "currentColor" : "none"} />
               </button>
               
               <button
                 onClick={toggleArchive}
-                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all border ${
+                className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition-all border shrink-0 ${
                   isArchived 
                     ? 'bg-slate-500/20 border-slate-500/30 text-slate-300' 
                     : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-300'
                 }`}
                 title={isArchived ? "Unarchive Document" : "Archive Document"}
               >
-                <Archive size={18} />
+                <Archive size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
+              
+              <div className="h-6 w-px bg-white/10 mx-0.5 hidden sm:block"></div>
 
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => onShare(document)} 
-                className="rounded-xl border-purple-500/30 text-purple-400 hover:bg-purple-500/10 h-10"
+                className="rounded-xl border-purple-500/30 text-purple-400 hover:bg-purple-500/10 h-9 sm:h-10 px-2.5 sm:px-4"
               >
-                <Share2 size={18} className="mr-2" /> Share
+                <Share2 size={16} className="sm:w-[18px] sm:h-[18px] sm:mr-2" />
+                <span className="hidden sm:inline">Share</span>
               </Button>
+              
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -245,18 +251,27 @@ const DocumentViewer = ({ isOpen, onClose, document, token, API_URL, onShare, on
                   const success = await onDelete(document.id);
                   if (success) onClose();
                 }} 
-                className="rounded-xl border-red-500/30 text-red-400 hover:bg-red-500/10 h-10"
+                className="rounded-xl border-red-500/30 text-red-400 hover:bg-red-500/10 h-9 sm:h-10 px-2.5 sm:px-4"
               >
-                <Trash2 size={18} className="mr-2" /> Delete
+                <Trash2 size={16} className="sm:w-[18px] sm:h-[18px] sm:mr-2" />
+                <span className="hidden sm:inline">Delete</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDownload} className="rounded-xl h-10">
-                <Download size={18} className="mr-2" /> Download
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownload} 
+                className="rounded-xl h-9 sm:h-10 px-2.5 sm:px-4 text-slate-300 border-white/10 hover:bg-white/5"
+              >
+                <Download size={16} className="sm:w-[18px] sm:h-[18px] sm:mr-2" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
+              
               <button 
                 onClick={onClose}
-                className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors"
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors shrink-0 ml-auto sm:ml-0"
               >
-                <X size={20} />
+                <X size={18} className="sm:w-[20px] sm:h-[20px]" />
               </button>
             </div>
           </div>

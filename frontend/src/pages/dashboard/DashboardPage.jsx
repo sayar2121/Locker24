@@ -254,25 +254,25 @@ const DashboardPage = () => {
 
           {/* Documents Table */}
           <div className="glass bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold font-display">Recent Secure Files</h2>
                 <p className="text-sm text-slate-500 mt-0.5">Quick access to recently uploaded records</p>
               </div>
-              <Button variant="outline" className="rounded-2xl px-5 border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white" onClick={() => window.location.href='/documents'}>
+              <Button variant="outline" className="rounded-2xl px-5 border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white self-start sm:self-auto" onClick={() => window.location.href='/documents'}>
                 View All Files <ChevronRight size={16} className="ml-1" />
               </Button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto -mx-6 px-6">
+              <table className="w-full text-left min-w-[700px]">
                 <thead>
                   <tr className="border-b border-border text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    <th className="pb-4">Name</th>
-                    <th className="pb-4">Category</th>
-                    <th className="pb-4">Size</th>
-                    <th className="pb-4">Uploaded</th>
-                    <th className="pb-4 text-right">Actions</th>
+                    <th className="pb-4 min-w-[240px]">Name</th>
+                    <th className="pb-4 min-w-[120px]">Category</th>
+                    <th className="pb-4 min-w-[100px]">Size</th>
+                    <th className="pb-4 min-w-[110px]">Uploaded</th>
+                    <th className="pb-4 min-w-[130px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -295,21 +295,23 @@ const DashboardPage = () => {
                         onClick={() => openViewer(doc)}
                         className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                       >
-                        <td className="py-4 flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getFileIcon(doc.name).color}`}>
+                        <td className="py-4 flex items-center gap-3 pr-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${getFileIcon(doc.name).color}`}>
                             {getFileIcon(doc.name).icon}
                           </div>
-                          <div>
-                            <div className="font-bold text-slate-900 dark:text-white group-hover:text-primary-500 transition-colors">{doc.name}</div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-slate-900 dark:text-white group-hover:text-primary-500 transition-colors truncate max-w-[200px]" title={doc.name}>
+                              {doc.name}
+                            </div>
                           </div>
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 pr-4">
                           <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 capitalize">
                             {doc.category}
                           </span>
                         </td>
-                        <td className="py-4 text-slate-500 font-medium">{doc.size}</td>
-                        <td className="py-4 text-slate-500 font-medium">
+                        <td className="py-4 pr-4 text-slate-500 font-medium">{doc.size}</td>
+                        <td className="py-4 pr-4 text-slate-500 font-medium">
                           {new Date(doc.created_at).toLocaleDateString()}
                         </td>
                         <td className="py-4 text-right" onClick={(e) => e.stopPropagation()}>
