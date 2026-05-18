@@ -43,6 +43,7 @@ class AuthService:
             (User.email == email_or_username) | (User.username == email_or_username)
         ).first()
         
+        # Enforce valid user and password check (allowing any user created in DB)
         if not user or not verify_password(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

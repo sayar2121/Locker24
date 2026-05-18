@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.auth import UserCreate, UserLogin, Token, UserResponse, ProfileUpdate
@@ -20,8 +20,12 @@ router = APIRouter()
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_in: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user in the vault."""
-    return auth_service.register_user(db, user_in.model_dump())
+    # Original registration call (commented out to satisfy admin-only restriction):
+    # return auth_service.register_user(db, user_in.model_dump())
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Registration is disabled. Only the designated administrator account is allowed."
+    )
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: Session = Depends(get_db)):
@@ -116,18 +120,15 @@ class ResetPasswordRequest(BaseModel):
 
 @router.post("/forgot-password")
 async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    """Generate a secure, short-lived JWT token for password reset."""
-    user = db.query(User).filter(User.email == payload.email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="No account registered with this email address.")
-    
-    # Create reset token with a 15-minute expiration
-    reset_token = create_access_token(subject=user.id, expires_delta=timedelta(minutes=15))
-    reset_url = f"http://localhost:5173/reset-password?token={reset_token}"
+    # Original forgot password generation (commented out to satisfy routing requirement):
+    # user = db.query(User).filter(User.email == payload.email).first()
+    # if not user:
+    #     raise HTTPException(status_code=404, detail="No account registered with this email address.")
+    # reset_token = create_access_token(subject=user.id, expires_delta=timedelta(minutes=15))
+    # reset_url = f"http://localhost:5173/reset-password?token={reset_token}"
     
     return {
-        "message": "Recovery details generated successfully.",
-        "reset_url": reset_url
+        "message": "Mailto flow initiated."
     }
 
 @router.post("/reset-password")

@@ -14,7 +14,8 @@ import {
   Archive, 
   Trash2,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  FolderOpen
 } from 'lucide-react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
@@ -104,9 +105,9 @@ const categories = [
 ];
 
 const systemCategories = [
-  { id: 'shared', name: 'Shared', icon: Share2, color: 'text-purple-500' },
-  { id: 'favorites', name: 'Favorites', icon: Star, color: 'text-amber-500' },
-  { id: 'archived', name: 'Archived', icon: Archive, color: 'text-slate-500' },
+  // { id: 'shared', name: 'Shared', icon: Share2, color: 'text-purple-500' },
+  // { id: 'favorites', name: 'Starred', icon: Star, color: 'text-amber-500' },
+  // { id: 'archived', name: 'Archived', icon: Archive, color: 'text-slate-500' },
   { id: 'trash', name: 'Trash', icon: Trash2, color: 'text-red-500' }
 ];
 
@@ -181,6 +182,9 @@ const CategoriesPage = () => {
   };
 
   const handleDeleteDocument = (docId, shouldCloseViewer = false) => {
+    const doc = documents.find(d => d.id === docId);
+    const docName = doc ? doc.name : 'Unknown File';
+
     triggerConfirm(
       "Move to Trash?",
       "Are you sure you want to move this document to Trash? You can recover or restore it later.",
@@ -190,6 +194,24 @@ const CategoriesPage = () => {
         if (!trashed.includes(docId)) {
           localStorage.setItem('trashed_documents', JSON.stringify([...trashed, docId]));
         }
+
+        // Log soft-delete to activity log
+        try {
+          await fetch(`${API_URL}/api/activity/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              action: 'DELETE',
+              details: `Moved document "${docName}" to Trash`
+            })
+          });
+        } catch (err) {
+          console.error('Failed to log delete activity:', err);
+        }
+
         // Refetch documents
         const docRes = await fetch(`${API_URL}/api/documents/`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -264,12 +286,17 @@ const CategoriesPage = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Topbar />
         
-        <div className="p-8 space-y-10 max-w-7xl mx-auto w-full">
-          {/* Header */}
+        <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+          {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold font-display">Document Categories</h1>
-              <p className="text-muted-foreground mt-1">Organize and manage your vault by document types</p>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-primary-600/10 text-primary-500 flex items-center justify-center">
+                <FolderOpen size={24} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold font-display">Document Categories</h1>
+                <p className="text-muted-foreground mt-0.5 text-sm">Organize and manage your vault by document types</p>
+              </div>
             </div>
             <div className="flex items-center gap-4 bg-white dark:bg-slate-900/50 p-1.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
               <button 

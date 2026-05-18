@@ -38,12 +38,32 @@ const ShareModal = ({ isOpen, onClose, document, token, API_URL, bypassPin }) =>
 
   useEffect(() => {
     if (document) {
-      const isSensitive = ['Finance', 'Identity', 'Health', 'Legal'].includes(document.category);
+      const isSensitive = ['Finance', 'Identity', 'Health', 'Legal'].includes(document.category) || document.is_sensitive;
       setPinVerified(!isSensitive || !!bypassPin);
       setPinInput('');
       setPinError('');
     }
   }, [document, bypassPin, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Capture back button press / swipe-to-back gestures on mobile
+      window.history.pushState({ modalOpen: true }, '');
+
+      const handlePopState = () => {
+        handleClose();
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+        if (window.history.state?.modalOpen) {
+          window.history.back();
+        }
+      };
+    }
+  }, [isOpen]);
 
   const handleVerifyPin = (e) => {
     e.preventDefault();
@@ -181,7 +201,7 @@ const ShareModal = ({ isOpen, onClose, document, token, API_URL, bypassPin }) =>
               <div>
                 <h3 className="text-xl font-bold text-slate-200">Secure Sharing Verification</h3>
                 <p className="text-sm text-slate-400 mt-2 px-4">
-                  Sharing highly sensitive <strong>{document.category}</strong> documents requires authorization. Enter your 4-digit Vault PIN.
+                  Sharing highly sensitive <strong>{['Finance', 'Identity', 'Health', 'Legal'].includes(document.category) ? document.category : 'personal'}</strong> documents requires authorization. Enter your 4-digit Vault PIN.
                 </p>
               </div>
             </div>

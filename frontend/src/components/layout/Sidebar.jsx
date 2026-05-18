@@ -12,7 +12,9 @@ import {
   FolderOpen,
   User,
   DownloadCloud,
-  X
+  X,
+  Star,
+  Archive
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { clsx } from 'clsx';
@@ -80,6 +82,8 @@ const Sidebar = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: FolderOpen, label: 'Categories', path: '/categories' },
     { icon: Files, label: 'All Documents', path: '/documents' },
+    // { icon: Star, label: 'Starred', path: '/categories/favorites' },
+    // { icon: Archive, label: 'Archived', path: '/categories/archived' },
     { icon: History, label: 'Activity Log', path: '/activity' },
   ];
   const bottomItems = [
@@ -90,6 +94,7 @@ const Sidebar = () => {
   const NavItem = ({ icon: Icon, label, path }) => (
     <NavLink
       to={path}
+      end
       className={({ isActive }) => clsx(
         "flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-300 group relative",
         isActive 
@@ -116,12 +121,14 @@ const Sidebar = () => {
     <>
       <div className="flex items-center justify-between px-2 mb-6">
         <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 active:scale-[0.98] transition-all group">
-          <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+          <div className="w-[88px] h-[88px] flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
             <img src={logo} alt="Locker 24" className="w-full h-full object-contain" />
           </div>
+          {/*
           <span className="text-xl font-bold font-display tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
             Locker 24
           </span>
+          */}
         </Link>
         {isMobile && (
           <button 
@@ -146,32 +153,17 @@ const Sidebar = () => {
           ))}
         </div>
 
-        {isInstallable && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 mx-2 p-3.5 rounded-[1.5rem] glass bg-gradient-to-br from-primary-600/10 to-indigo-600/5 border border-primary-500/20 text-center space-y-2.5 shadow-lg"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary-600/20 text-primary-400 flex items-center justify-center shrink-0">
-                <DownloadCloud size={18} className="animate-bounce" />
-              </div>
-              <div className="text-left">
-                <div className="font-bold text-xs text-white">Locker 24 App</div>
-                <div className="text-[10px] text-slate-400">Install standalone app</div>
-              </div>
-            </div>
-            <button
-              onClick={handleInstallClick}
-              className="w-full py-2 bg-primary-600 hover:bg-primary-500 active:scale-[0.98] text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-primary-600/20"
-            >
-              Download App
-            </button>
-          </motion.div>
-        )}
       </nav>
 
-      <div className="mt-auto pt-4 border-t border-white/5">
+      <div className="mt-auto pt-4 border-t border-white/5 space-y-1.5">
+        <button
+          onClick={handleInstallClick}
+          className="flex items-center gap-3 w-full px-4 py-2.5 text-slate-400 hover:bg-primary-500/5 hover:text-primary-400 rounded-2xl transition-all font-semibold group"
+        >
+          <DownloadCloud size={20} className="transition-transform group-hover:scale-110 text-slate-500 group-hover:text-primary-400" />
+          <span className="text-sm">Install App</span>
+        </button>
+
         <button
           onClick={logout}
           className="flex items-center gap-3 w-full px-4 py-2.5 text-slate-400 hover:bg-red-500/5 hover:text-red-400 rounded-2xl transition-all font-semibold group"

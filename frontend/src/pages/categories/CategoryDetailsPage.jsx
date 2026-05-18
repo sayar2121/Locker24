@@ -25,7 +25,13 @@ import {
   Archive,
   Share2,
   Star,
-  Trash2
+  Trash2,
+  FileSpreadsheet, 
+  Presentation, 
+  FileImage, 
+  FileCode, 
+  FileArchive,
+  FileVideo
 } from 'lucide-react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
@@ -47,7 +53,7 @@ const categoryConfig = {
   personal: { name: 'Personal', icon: User, theme: 'pink' },
   other: { name: 'Other', icon: Archive, theme: 'slate' },
   shared: { name: 'Shared', icon: Share2, theme: 'purple' },
-  favorites: { name: 'Favorites', icon: Star, theme: 'amber' },
+  favorites: { name: 'Starred', icon: Star, theme: 'amber' },
   archived: { name: 'Archived', icon: Archive, theme: 'slate' },
   trash: { name: 'Trash', icon: Trash2, theme: 'red' }
 };
@@ -60,6 +66,7 @@ const CategoryDetailsPage = () => {
   const config = categoryConfig[id] || categoryConfig.personal;
   
   const [documents, setDocuments] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(['Finance', 'Identity', 'Health', 'Legal'].includes(config.name));
@@ -68,6 +75,40 @@ const CategoryDetailsPage = () => {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  const filteredDocuments = documents.filter(doc => 
+    doc.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getFileIcon = (filename) => {
+    if (!filename) return { icon: <FileText size={24} />, color: 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' };
+    const ext = filename.split('.').pop().toLowerCase();
+    const iconProps = { size: 24 };
+    
+    if (['xls', 'xlsx', 'csv'].includes(ext)) {
+      return { icon: <FileSpreadsheet {...iconProps} />, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' };
+    }
+    if (['ppt', 'pptx'].includes(ext)) {
+      return { icon: <Presentation {...iconProps} />, color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: <FileImage {...iconProps} />, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' };
+    }
+    if (['js', 'py', 'html', 'css', 'json', 'sql'].includes(ext)) {
+      return { icon: <FileCode {...iconProps} />, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20' };
+    }
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+      return { icon: <FileArchive {...iconProps} />, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' };
+    }
+    if (['pdf'].includes(ext)) {
+      return { icon: <FileText {...iconProps} />, color: 'text-red-600 bg-red-50 dark:bg-red-900/20' };
+    }
+    if (['mp4', 'webm', 'ogg', 'mov', 'mkv', 'avi'].includes(ext)) {
+      return { icon: <FileVideo {...iconProps} />, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' };
+    }
+    
+    return { icon: <FileText {...iconProps} />, color: 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' };
+  };
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({
@@ -169,6 +210,9 @@ const CategoryDetailsPage = () => {
   };
 
   const handleDeleteDocument = (docId, shouldCloseViewer = false) => {
+    const doc = documents.find(d => d.id === docId);
+    const docName = doc ? doc.name : 'Unknown File';
+
     if (id === 'trash') {
       triggerConfirm(
         "Permanently Delete?",
@@ -200,11 +244,29 @@ const CategoryDetailsPage = () => {
         "Move to Trash?",
         "Are you sure you want to move this document to Trash? You can recover or restore it later.",
         "Move to Trash",
-        () => {
+        async () => {
           const trashed = JSON.parse(localStorage.getItem('trashed_documents') || '[]');
           if (!trashed.includes(docId)) {
             localStorage.setItem('trashed_documents', JSON.stringify([...trashed, docId]));
           }
+
+          // Log soft-delete to activity log
+          try {
+            await fetch(`${API_URL}/api/activity/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                action: 'DELETE',
+                details: `Moved document "${docName}" to Trash`
+              })
+            });
+          } catch (err) {
+            console.error('Failed to log delete activity:', err);
+          }
+
           fetchCategoryDocuments();
           if (shouldCloseViewer) setIsViewerOpen(false);
         }
@@ -212,11 +274,32 @@ const CategoryDetailsPage = () => {
     }
   };
 
-  const handleRestoreDocument = (e, docId) => {
+  const handleRestoreDocument = async (e, docId) => {
     e.stopPropagation();
+    const doc = documents.find(d => d.id === docId);
+    const docName = doc ? doc.name : 'Unknown File';
+
     const trashed = JSON.parse(localStorage.getItem('trashed_documents') || '[]');
     const updated = trashed.filter(id => id !== docId);
     localStorage.setItem('trashed_documents', JSON.stringify(updated));
+
+    // Log restore to activity log
+    try {
+      await fetch(`${API_URL}/api/activity/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'UPLOAD',
+          details: `Restored document "${docName}" from Trash`
+        })
+      });
+    } catch (err) {
+      console.error('Failed to log restore activity:', err);
+    }
+
     fetchCategoryDocuments();
   };
 
@@ -275,45 +358,52 @@ const CategoryDetailsPage = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Topbar />
         
-        <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className={`${['favorites', 'archived'].includes(id) ? 'p-6 space-y-6' : 'p-8 space-y-8'} max-w-7xl mx-auto w-full`}>
+          {/* Header Section */}
+          <div className={`flex flex-col md:flex-row md:items-center justify-between ${['favorites', 'archived'].includes(id) ? 'gap-4' : 'gap-6'}`}>
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/categories')}
-                className="w-10 h-10 p-0 rounded-full flex items-center justify-center"
-              >
-                <ArrowLeft size={18} />
-              </Button>
+              {!['favorites', 'archived'].includes(id) && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/dashboard')}
+                  className="w-10 h-10 p-0 rounded-full flex items-center justify-center"
+                >
+                  <ArrowLeft size={18} />
+                </Button>
+              )}
               <div className="flex items-center gap-3">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white ${themeClass.split(' ')[0]} ${themeClass.split(' ')[1]}`}>
-                  <config.icon size={28} />
+                <div className={`${['favorites', 'archived'].includes(id) ? 'w-10 h-10 rounded-lg' : 'w-12 h-12 rounded-xl'} flex items-center justify-center text-white ${themeClass.split(' ')[0]} ${themeClass.split(' ')[1]}`}>
+                  <config.icon size={['favorites', 'archived'].includes(id) ? 20 : 24} />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold font-display">{config.name} Documents</h1>
-                  <p className="text-muted-foreground text-sm mt-0.5">Secure personal vault storage</p>
+                  <h1 className={`${['favorites', 'archived'].includes(id) ? 'text-2xl' : 'text-3xl'} font-bold font-display`}>{config.name} Documents</h1>
+                  <p className="text-muted-foreground text-xs mt-0.5">Secure personal vault storage</p>
                 </div>
               </div>
             </div>
             
-            {/* Don't show Upload button in System Folders (Shared, Favorites, Archived, Trash) */}
-            {!['shared', 'favorites', 'archived', 'trash'].includes(id) && (
-              <Button onClick={() => setIsUploadModalOpen(true)}>
-                <Plus size={18} className="mr-2" /> Add Document
-              </Button>
-            )}
-          </div>
-
-          {/* Search */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <input 
-                type="text" 
-                placeholder={`Search in ${config.name}...`}
-                className="w-full bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary-600/20 outline-none"
-              />
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
+              <div className="relative group w-full sm:w-auto">
+                <Search className={`absolute ${['favorites', 'archived'].includes(id) ? 'left-3.5' : 'left-4'} top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary-500`} size={['favorites', 'archived'].includes(id) ? 16 : 18} />
+                <input 
+                  type="text" 
+                  placeholder={`Search in ${config.name}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-100 ${
+                    ['favorites', 'archived'].includes(id) 
+                      ? 'py-2 pl-10 text-sm w-full sm:w-64' 
+                      : 'py-3 pl-12 w-full sm:w-72'
+                  }`}
+                />
+              </div>
+              
+              {/* Don't show Upload button in System Folders (Shared, Favorites, Archived, Trash) */}
+              {!['shared', 'favorites', 'archived', 'trash'].includes(id) && (
+                <Button onClick={() => setIsUploadModalOpen(true)} className="xs:w-auto w-full">
+                  <Plus size={18} className="mr-2" /> Add Document
+                </Button>
+              )}
             </div>
           </div>
 
@@ -353,8 +443,20 @@ const CategoryDetailsPage = () => {
                         )}
                       </td>
                     </tr>
+                  ) : filteredDocuments.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="px-8 py-20 text-center">
+                        <div className="w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-300">
+                          <Search size={40} />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">No results found</h3>
+                        <p className="text-muted-foreground">
+                          No documents matched your query "{searchQuery}".
+                        </p>
+                      </td>
+                    </tr>
                   ) : (
-                    documents.map((doc, i) => (
+                    filteredDocuments.map((doc, i) => (
                       <motion.tr 
                         key={doc.id}
                         initial={{ opacity: 0, x: -10 }}
@@ -365,9 +467,14 @@ const CategoryDetailsPage = () => {
                       >
                         <td className="px-8 py-5">
                           <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-900/20 text-primary-600 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                              <FileText size={24} />
-                            </div>
+                            {(() => {
+                              const fileIconObj = getFileIcon(doc.name);
+                              return (
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${fileIconObj.color}`}>
+                                  {fileIconObj.icon}
+                                </div>
+                              );
+                            })()}
                             <div>
                               <div className="font-bold group-hover:text-primary-600 transition-colors">{doc.name}</div>
                               <div className="text-xs text-muted-foreground">{new Date(doc.created_at).toLocaleDateString()}</div>
@@ -406,6 +513,7 @@ const CategoryDetailsPage = () => {
                                 >
                                   View
                                 </Button>
+                                {/*
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
@@ -414,6 +522,7 @@ const CategoryDetailsPage = () => {
                                 >
                                   <Share2 size={18} />
                                 </Button>
+                                */}
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
@@ -450,7 +559,6 @@ const CategoryDetailsPage = () => {
         document={selectedDoc}
         token={token}
         API_URL={API_URL}
-        onShare={openShare}
         onDelete={(docId) => handleDeleteDocument(docId, true)}
         onUpdate={fetchCategoryDocuments}
         bypassPin={true}

@@ -21,7 +21,8 @@ import {
   TrendingUp,
   Activity,
   LogOut,
-  FolderOpen
+  FolderOpen,
+  FileVideo
 } from 'lucide-react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
@@ -65,7 +66,7 @@ const DashboardPage = () => {
   };
 
   const handleDownloadDirect = async (doc) => {
-    const isSensitive = ['Finance', 'Identity', 'Health', 'Legal'].includes(doc.category);
+    const isSensitive = ['Finance', 'Identity', 'Health', 'Legal'].includes(doc.category) || doc.is_sensitive;
     if (isSensitive) {
       openViewer(doc);
       return;
@@ -110,6 +111,9 @@ const DashboardPage = () => {
     }
     if (['pdf'].includes(ext)) {
       return { icon: <FileText {...iconProps} />, color: 'bg-red-500/10 text-red-500' };
+    }
+    if (['mp4', 'webm', 'ogg', 'mov', 'mkv', 'avi'].includes(ext)) {
+      return { icon: <FileVideo {...iconProps} />, color: 'bg-indigo-500/10 text-indigo-500' };
     }
     
     return { icon: <FileText {...iconProps} />, color: 'bg-slate-500/10 text-slate-500' };
@@ -203,7 +207,7 @@ const DashboardPage = () => {
 
   const stats = [
     { label: 'Total Documents', value: documents.length.toString(), icon: FileText, color: 'bg-blue-500' },
-    { label: 'Recently Shared', value: sharedCount.toString(), icon: Share2, color: 'bg-purple-500' },
+    // { label: 'Recently Shared', value: sharedCount.toString(), icon: Share2, color: 'bg-purple-500' },
     { label: 'Secure Storage', value: totalStorageUsed, icon: Shield, color: 'bg-emerald-500' },
     { label: 'Pending Actions', value: '0', icon: Clock, color: 'bg-amber-500' },
   ];
@@ -322,9 +326,11 @@ const DashboardPage = () => {
                             <button className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/40 hover:bg-emerald-500/10 hover:text-emerald-500 flex items-center justify-center transition-all text-slate-500 dark:text-slate-400" onClick={() => handleDownloadDirect(doc)} title="Secure Download">
                               <Download size={16} />
                             </button>
+                            {/*
                             <button className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/40 hover:bg-purple-500/10 hover:text-purple-500 flex items-center justify-center transition-all text-slate-500 dark:text-slate-400" onClick={() => openShare(doc)} title="Secure Share Link">
                               <Share2 size={16} />
                             </button>
+                            */}
                             <button className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/40 hover:bg-red-500/10 hover:text-red-500 flex items-center justify-center transition-all text-slate-500 dark:text-slate-400" onClick={() => handleDeleteDocument(doc.id)} title="Move to Trash">
                               <Trash2 size={16} />
                             </button>
@@ -362,7 +368,6 @@ const DashboardPage = () => {
         document={selectedDoc}
         token={token}
         API_URL={API_URL}
-        onShare={openShare}
         onDelete={(docId) => handleDeleteDocument(docId, true)}
         onUpdate={fetchDocuments}
       />

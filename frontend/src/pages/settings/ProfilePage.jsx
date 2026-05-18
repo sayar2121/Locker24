@@ -83,11 +83,16 @@ const ProfilePage = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Topbar />
         
-        <div className="p-8 space-y-8 max-w-5xl mx-auto w-full">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold font-display">Account Profile</h1>
-            <p className="text-muted-foreground">Manage your personal information and security settings</p>
+        <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+          {/* Header Section */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary-600/10 text-primary-500 flex items-center justify-center">
+              <User size={24} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold font-display">Account Profile</h1>
+              <p className="text-muted-foreground mt-0.5 text-sm">Manage your personal information and security settings</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -104,9 +109,11 @@ const ProfilePage = () => {
                       <div className="text-4xl font-bold text-primary-500">{formData.fullName.charAt(0)}</div>
                     </div>
                   </div>
+                  {/*
                   <button className="absolute bottom-1 right-1 w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-900 hover:scale-110 transition-transform">
                     <Camera size={18} />
                   </button>
+                  */}
                 </div>
                 
                 <h2 className="text-xl font-bold">{formData.fullName}</h2>

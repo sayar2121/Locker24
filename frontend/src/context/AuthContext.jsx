@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
@@ -58,8 +57,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Login failed:', error.message);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -72,7 +69,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async (googlePayload) => {
-    setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/auth/google`, {
         method: 'POST',
@@ -98,8 +94,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Google Auth failed:', error.message);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 

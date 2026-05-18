@@ -56,6 +56,29 @@ const ActivityLogPage = () => {
   const { token, API_URL, user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+
+  const filterOptions = [
+    { value: 'ALL', label: 'All Activities' },
+    { value: 'UPLOAD', label: 'Uploads Only' },
+    { value: 'SHARE', label: 'Shares Only' },
+    { value: 'DELETE', label: 'Deletes Only' },
+    { value: 'LOGIN', label: 'Login Sessions' },
+    { value: 'SECURITY', label: 'Security' }
+  ];
+
+  const filteredLogs = logs.filter(log => {
+    const config = getActionConfig(log.action);
+    const matchesSearch = (
+      log.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.details?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      config.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const matchesFilter = selectedFilter === 'ALL' || log.action?.toUpperCase() === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
 
   // Reusable document states
   const [documents, setDocuments] = useState([]);
@@ -193,35 +216,78 @@ const ActivityLogPage = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Topbar />
         
-        <div className="p-8 space-y-8 max-w-5xl mx-auto w-full">
-          {/* Header */}
+        <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+          {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-primary-600/10 text-primary-500 rounded-xl flex items-center justify-center">
-                  <History size={24} />
-                </div>
-                <h1 className="text-3xl font-bold font-display">Activity Log</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-primary-600/10 text-primary-500 flex items-center justify-center">
+                <History size={24} />
               </div>
-              <p className="text-muted-foreground">Track all actions and changes within your secure vault</p>
+              <div>
+                <h1 className="text-3xl font-bold font-display">Activity Log</h1>
+                <p className="text-muted-foreground mt-0.5 text-sm">Track all actions and changes within your secure vault</p>
+              </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm">
-                <Filter size={18} className="mr-2" /> Filter
-              </Button>
-            </div>
-          </div>
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto relative">
+              <div className="relative group w-full sm:w-auto">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary-500" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Search history..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-100"
+                />
+              </div>
 
-          {/* Search Bar */}
-          <div className="glass bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search history..."
-                className="w-full bg-transparent border-none py-2 pl-12 pr-4 focus:ring-0 text-sm outline-none"
-              />
+              <div className="relative w-full xs:w-auto">
+                <Button 
+                  variant={selectedFilter !== 'ALL' ? 'primary' : 'outline'} 
+                  size="sm"
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="w-full xs:w-auto h-12"
+                >
+                  <Filter size={18} className="mr-2" /> 
+                  {selectedFilter === 'ALL' ? 'Filter' : filterOptions.find(o => o.value === selectedFilter)?.label}
+                </Button>
+
+                <AnimatePresence>
+                  {isFilterDropdownOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-30" 
+                        onClick={() => setIsFilterDropdownOpen(false)} 
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 top-full w-52 rounded-2xl z-40 bg-slate-950/95 border border-white/10 shadow-2xl p-2 backdrop-blur-md"
+                      >
+                        {filterOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => {
+                              setSelectedFilter(opt.value);
+                              setIsFilterDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between uppercase tracking-wider ${
+                              selectedFilter === opt.value
+                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
+                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                            }`}
+                          >
+                            <span>{opt.label}</span>
+                            {selectedFilter === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                          </button>
+                        ))}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
@@ -229,14 +295,18 @@ const ActivityLogPage = () => {
           <div className="space-y-4">
             {isLoading ? (
               <Loader variant="dots" size="md" text="Fetching history..." center />
-            ) : logs.length === 0 ? (
+            ) : filteredLogs.length === 0 ? (
               <div className="py-20 text-center glass rounded-3xl border border-dashed border-slate-800">
                 <History size={48} className="mx-auto mb-4 text-slate-700" />
-                <h3 className="text-xl font-bold text-slate-400">No activity yet</h3>
-                <p className="text-slate-500">Your actions will appear here once you start using the vault.</p>
+                <h3 className="text-xl font-bold text-slate-400">
+                  {searchQuery ? "No results found" : "No activity yet"}
+                </h3>
+                <p className="text-slate-500">
+                  {searchQuery ? "Try searching with a different keyword." : "Your actions will appear here once you start using the vault."}
+                </p>
               </div>
             ) : (
-              logs.map((log, i) => {
+              filteredLogs.map((log, i) => {
                 const config = getActionConfig(log.action);
                 const isDocAction = ['UPLOAD', 'SHARE'].includes(log.action.toUpperCase());
                 return (
@@ -312,7 +382,6 @@ const ActivityLogPage = () => {
         document={selectedDoc}
         token={token}
         API_URL={API_URL}
-        onShare={openShare}
         onDelete={(docId) => handleDeleteDocument(docId, true)}
         onUpdate={fetchDocs}
       />

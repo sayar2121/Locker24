@@ -15,8 +15,34 @@ const ForgotPasswordPage = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:8000`;
 
+  const [showAdminPopup, setShowAdminPopup] = useState(false);
+  const [requestedEmail, setRequestedEmail] = useState('');
+
+  const triggerMailTo = (emailVal) => {
+    const subject = encodeURIComponent("Locker 24 - Vault Recovery Request");
+    const body = encodeURIComponent(`Hello Administrator,\n\nI am requesting a password recovery key for my secure vault account.\n\nMy Registered Email Address: ${emailVal}\n\nPlease review my vault ownership claim and issue a new secure entry key.\n\nThank you!`);
+    window.location.href = `mailto:naiyooffice@gmail.com?subject=${subject}&body=${body}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setRequestedEmail(email);
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Trigger the local mail composer with prefilled parameters
+      triggerMailTo(email);
+      
+      // Open the elegant glassmorphism confirmation modal dialog
+      setShowAdminPopup(true);
+    } catch (err) {
+      setError(err.message || 'An error occurred while launching your mail client.');
+    } finally {
+      setIsLoading(false);
+    }
+
+    /* Commented out original recovery logic to satisfy user request:
     setIsLoading(true);
     setError('');
     setSuccessData(null);
@@ -43,6 +69,7 @@ const ForgotPasswordPage = () => {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   const handleCopyLink = () => {
@@ -118,7 +145,7 @@ const ForgotPasswordPage = () => {
                   className="w-full py-4 text-lg" 
                   isLoading={isLoading}
                 >
-                  Send Recovery Link <Send size={18} className="ml-2" />
+                  Send Recovery Password <Send size={18} className="ml-2" />
                 </Button>
               </motion.form>
             ) : (
@@ -183,6 +210,66 @@ const ForgotPasswordPage = () => {
           </div>
         </div>
       </motion.div>
+      {/* Administrative Redirect Popup Modal */}
+      <AnimatePresence>
+        {showAdminPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAdminPopup(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+            
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 text-center shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-16 h-16 bg-primary-500/10 text-primary-500 rounded-3xl flex items-center justify-center mb-4 shadow-lg shadow-primary-500/5">
+                  <Mail size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-white font-display">Recovery Request Routed</h3>
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                  Your request has been successfully transmitted to the system administrator.
+                </p>
+              </div>
+
+              <div className="bg-slate-950/50 border border-white/5 rounded-2xl p-5 text-left space-y-4 mb-6">
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest block">Requested Account</span>
+                  <span className="text-sm font-semibold text-slate-200 break-all">{requestedEmail}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest block">Routed To</span>
+                  <span className="text-sm font-semibold text-primary-400 break-all">naiyooffice@gmail.com</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  The administrator will review your vault ownership claim and issue a new secure entry key to your registered address.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={() => triggerMailTo(requestedEmail)}
+                  className="w-full py-3.5 bg-primary-600 hover:bg-primary-500 font-bold flex items-center justify-center gap-2"
+                >
+                  <Send size={16} /> Open Mail Client Again
+                </Button>
+                <button 
+                  onClick={() => setShowAdminPopup(false)}
+                  className="w-full py-2.5 text-xs text-slate-400 hover:text-white transition-colors font-semibold"
+                >
+                  Close & Dismiss
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -21,8 +21,10 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError('Registration is disabled. Only the designated administrator account (admin) is authorized.');
+    return;
 
+    /* Commented out original registration fetch to enforce admin-only restriction:
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -55,6 +57,7 @@ const RegisterPage = () => {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   return (

@@ -25,6 +25,18 @@ import Input from '../../components/common/Input';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import { useAuth } from '../../context/AuthContext';
 
+const SettingSection = ({ title, icon: Icon, children }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-2 px-2">
+      <Icon size={18} className="text-primary-500" />
+      <h2 className="text-lg font-bold text-slate-200">{title}</h2>
+    </div>
+    <div className="glass bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden">
+      {children}
+    </div>
+  </div>
+);
+
 const SettingsPage = () => {
   const { token, API_URL, logout } = useAuth();
   
@@ -332,17 +344,7 @@ const SettingsPage = () => {
   const percentageUsed = Math.min(100, parseFloat(((storageUsedBytes / LIMIT_BYTES) * 100).toFixed(2)));
   const freeBytes = Math.max(0, LIMIT_BYTES - storageUsedBytes);
 
-  const SettingSection = ({ title, icon: Icon, children }) => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 px-2">
-        <Icon size={18} className="text-primary-500" />
-        <h2 className="text-lg font-bold text-slate-200">{title}</h2>
-      </div>
-      <div className="glass bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden">
-        {children}
-      </div>
-    </div>
-  );
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -351,7 +353,7 @@ const SettingsPage = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Topbar />
         
-        <div className="p-8 space-y-10 max-w-4xl mx-auto w-full">
+        <div className="p-8 space-y-10 max-w-7xl mx-auto w-full">
           {/* Toast Notification */}
           <AnimatePresence>
             {toastMessage && (
@@ -367,15 +369,15 @@ const SettingsPage = () => {
             )}
           </AnimatePresence>
 
-          {/* Header */}
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-primary-600/10 text-primary-500 rounded-xl flex items-center justify-center">
-                <Settings size={24} />
-              </div>
-              <h1 className="text-3xl font-bold font-display">System Settings</h1>
+          {/* Header Section */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary-600/10 text-primary-500 flex items-center justify-center">
+              <Settings size={24} />
             </div>
-            <p className="text-muted-foreground">Manage your secure zero-knowledge preferences, profile parameters, and account settings</p>
+            <div>
+              <h1 className="text-3xl font-bold font-display">System Settings</h1>
+              <p className="text-muted-foreground mt-0.5 text-sm">Manage your secure zero-knowledge preferences, profile parameters, and account settings</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-8">

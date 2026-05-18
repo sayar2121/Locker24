@@ -186,6 +186,15 @@ async def delete_document(
     # Delete any active shared links associated with this document first
     db.query(SharedLink).filter(SharedLink.document_id == document_id).delete(synchronize_session=False)
 
+    # Log the activity
+    from app.services.activity_service import activity_service
+    activity_service.log_action(
+        db,
+        user_id=current_user.id,
+        action="DELETE",
+        details=f"Permanently deleted document: {doc.name}"
+    )
+
     storage_service.delete_file(doc.file_path)
 
     db.delete(doc)

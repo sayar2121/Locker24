@@ -1,12 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Bell, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Topbar = () => {
   const { user, isSidebarOpen, setIsSidebarOpen, token, API_URL } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
 
   const [notifications, setNotifications] = React.useState([]);
   const [showNotifications, setShowNotifications] = React.useState(false);
@@ -43,7 +45,7 @@ const Topbar = () => {
             id: act.id || idx,
             title,
             details: act.details,
-            time: new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: new Date(act.created_at || act.timestamp || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             color,
             read: false
           };
@@ -72,29 +74,22 @@ const Topbar = () => {
   };
 
   return (
-    <header className="h-20 border-b border-slate-200 bg-white dark:bg-slate-950 dark:border-slate-800 sticky top-0 z-40 px-8 flex items-center justify-between transition-colors duration-300">
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
+    <header className="h-14 border-b border-slate-200 bg-white dark:bg-slate-950 dark:border-slate-800 sticky top-0 z-40 px-4 xs:px-6 sm:px-8 flex items-center justify-between transition-all duration-300">
+      <div className="flex items-center gap-2 sm:gap-4 flex-1 max-w-xl">
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-colors text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
         >
           <Menu size={24} />
         </button>
-        <div className="relative w-full group hidden sm:block">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary-600 transition-colors" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search your documents..." 
-            className="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-2xl py-2.5 pl-12 pr-4 focus:ring-2 focus:ring-primary-600/20 transition-all outline-none"
-          />
-        </div>
+
       </div>
 
       <div className="flex items-center gap-3">
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-3 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-2xl transition-all text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 relative"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-2xl transition-all text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 relative"
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -118,7 +113,7 @@ const Topbar = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 15, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl z-40 bg-slate-950 border border-white/5 shadow-2xl p-4 overflow-hidden"
+                  className="fixed sm:absolute top-14 sm:mt-1 left-4 right-4 sm:left-auto sm:right-0 w-auto sm:w-96 rounded-3xl z-40 bg-slate-950 border border-white/5 shadow-2xl p-4 overflow-hidden"
                 >
                   <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-3">
                     <h3 className="font-bold text-xs text-white uppercase tracking-wider">Security Notifications</h3>
@@ -166,20 +161,20 @@ const Topbar = () => {
           </AnimatePresence>
         </div>
 
-        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-2"></div>
+        <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-2"></div>
 
         <button 
           onClick={() => navigate('/profile')}
-          className="flex items-center gap-3 p-1.5 pr-4 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-2xl transition-all group"
+          className="flex items-center gap-3 p-1 pr-4 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-2xl transition-all group"
         >
-          <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded-xl flex items-center justify-center font-bold">
+          <div className="w-8 h-8 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded-xl flex items-center justify-center font-bold">
             {user?.name?.[0] || 'U'}
           </div>
           <div className="hidden md:block text-left">
-            <div className="text-sm font-bold group-hover:text-primary-600 transition-colors">
+            <div className="text-sm font-bold group-hover:text-primary-600 transition-colors leading-none">
               {user?.name || 'User'}
             </div>
-            <div className="text-xs text-muted-foreground leading-none">
+            <div className="text-[10px] text-muted-foreground mt-0.5 leading-none">
               @{user?.username || 'username'}
             </div>
           </div>

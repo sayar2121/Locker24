@@ -30,3 +30,31 @@ app.include_router(activity.router, prefix="/api/activity", tags=["activity"])
 @app.get("/")
 async def root():
     return {"message": "Welcome to Locker 24 API", "status": "active"}
+
+# Self-healing database startup task to guarantee 'admin' user with password 'admin' exists
+try:
+    from app.core.database import SessionLocal
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    
+    db = SessionLocal()
+    admin_user = db.query(User).filter(User.username == "admin").first()
+    if not admin_user:
+        new_admin = User(
+            name="Admin",
+            email="admin@locker24.com",
+            username="admin",
+            hashed_password=get_password_hash("admin"),
+            is_active=True
+        )
+        db.add(new_admin)
+        db.commit()
+        print("Default admin user created successfully!")
+    else:
+        # Guarantee password is 'admin'
+        admin_user.hashed_password = get_password_hash("admin")
+        db.commit()
+        print("Default admin user verified.")
+    db.close()
+except Exception as e:
+    print(f"Warning: Failed to verify/create default admin user: {e}")

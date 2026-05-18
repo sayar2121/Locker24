@@ -22,6 +22,7 @@ const LoginPage = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
@@ -85,7 +86,8 @@ const LoginPage = () => {
         password: formData.password
       });
     } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      setError('wrong password entered or wrong userid entered');
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -196,13 +198,9 @@ const LoginPage = () => {
             </motion.div>
           )}
           {error && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl text-sm font-bold text-center"
-            >
-              {error}
-            </motion.div>
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl text-sm font-bold text-center">
+              wrong password or wrong userid
+            </div>
           )}
           <Input 
             label="Email or Username"
@@ -241,6 +239,7 @@ const LoginPage = () => {
             Sign In <LogIn size={20} className="ml-2" />
           </Button>
 
+          {/* 
           <div className="flex items-center gap-4 my-2">
             <div className="flex-1 h-px bg-white/10" />
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">or continue with</span>
@@ -260,15 +259,61 @@ const LoginPage = () => {
             </svg>
             <span>Sign in with Google</span>
           </button>
+          */}
 
+          {/*
           <p className="text-center text-muted-foreground text-sm">
             Don't have an account? {' '}
             <Link to="/register" className="text-primary-600 font-bold hover:underline">
               Create Account
             </Link>
           </p>
+          */}
         </form>
       </motion.div>
+
+      {/* Guaranteed Visible Error Modal */}
+      <AnimatePresence>
+        {showErrorModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+              onClick={() => setShowErrorModal(false)}
+            ></motion.div>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm bg-slate-900 border border-red-500/30 rounded-[2rem] p-8 text-center shadow-[0_0_50px_rgba(239,68,68,0.2)] overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-red-500/5 pointer-events-none" />
+              <div className="relative flex flex-col items-center">
+                <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-[2rem] flex items-center justify-center mb-6 shadow-lg shadow-red-500/20">
+                  <AlertTriangle size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 font-display">Access Denied</h3>
+                <p className="text-sm font-bold text-red-400 mb-8">
+                  wrong password or wrong userid
+                </p>
+                
+                <Button 
+                  onClick={() => setShowErrorModal(false)}
+                  className="w-full py-3.5 bg-red-600 hover:bg-red-500 border-none font-bold text-white shadow-lg shadow-red-600/30"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+
+
+
 
       {/* Simulated Google Authentication Dialog */}
       <AnimatePresence>

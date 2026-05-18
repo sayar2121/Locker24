@@ -15,12 +15,19 @@ import {
   Calendar,
   Layers,
   ArrowUpDown,
-  Lock
+  Lock,
+  FileSpreadsheet, 
+  Presentation, 
+  FileImage, 
+  FileCode, 
+  FileArchive,
+  FileVideo
 } from 'lucide-react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import UploadModal from '../../components/dashboard/UploadModal';
 import DocumentViewer from '../../components/dashboard/DocumentViewer';
 import ShareModal from '../../components/dashboard/ShareModal';
@@ -30,7 +37,8 @@ const AllDocumentsPage = () => {
   const { token, API_URL } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -60,7 +68,7 @@ const AllDocumentsPage = () => {
   };
 
   const handleDownloadDirect = async (doc) => {
-    const isSensitive = ['Finance', 'Identity', 'Health', 'Legal'].includes(doc.category);
+    const isSensitive = ['Finance', 'Identity', 'Health', 'Legal'].includes(doc.category) || doc.is_sensitive;
     if (isSensitive) {
       openViewer(doc);
       return;
@@ -106,15 +114,36 @@ const AllDocumentsPage = () => {
   };
 
   const handleDeleteDocument = (docId, shouldCloseViewer = false) => {
+    const doc = documents.find(d => d.id === docId);
+    const docName = doc ? doc.name : 'Unknown File';
+
     triggerConfirm(
       "Move to Trash?",
       "Are you sure you want to move this document to Trash? You can recover or restore it later.",
       "Move to Trash",
-      () => {
+      async () => {
         const trashed = JSON.parse(localStorage.getItem('trashed_documents') || '[]');
         if (!trashed.includes(docId)) {
           localStorage.setItem('trashed_documents', JSON.stringify([...trashed, docId]));
         }
+
+        // Log soft-delete to activity log
+        try {
+          await fetch(`${API_URL}/api/activity/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              action: 'DELETE',
+              details: `Moved document "${docName}" to Trash`
+            })
+          });
+        } catch (err) {
+          console.error('Failed to log delete activity:', err);
+        }
+
         fetchDocuments();
         if (shouldCloseViewer) setIsViewerOpen(false);
       }
@@ -126,6 +155,36 @@ const AllDocumentsPage = () => {
       fetchDocuments();
     }
   }, [token]);
+
+  const getFileIcon = (filename) => {
+    if (!filename) return { icon: <FileText size={26} />, color: 'bg-slate-500/10 text-slate-500' };
+    const ext = filename.split('.').pop().toLowerCase();
+    const iconProps = { size: 26 };
+    
+    if (['xls', 'xlsx', 'csv'].includes(ext)) {
+      return { icon: <FileSpreadsheet {...iconProps} />, color: 'bg-emerald-500/10 text-emerald-500' };
+    }
+    if (['ppt', 'pptx'].includes(ext)) {
+      return { icon: <Presentation {...iconProps} />, color: 'bg-orange-500/10 text-orange-500' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: <FileImage {...iconProps} />, color: 'bg-blue-500/10 text-blue-500' };
+    }
+    if (['js', 'py', 'html', 'css', 'json', 'sql'].includes(ext)) {
+      return { icon: <FileCode {...iconProps} />, color: 'bg-purple-500/10 text-purple-500' };
+    }
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+      return { icon: <FileArchive {...iconProps} />, color: 'bg-amber-500/10 text-amber-500' };
+    }
+    if (['pdf'].includes(ext)) {
+      return { icon: <FileText {...iconProps} />, color: 'bg-red-500/10 text-red-500' };
+    }
+    if (['mp4', 'webm', 'ogg', 'mov', 'mkv', 'avi'].includes(ext)) {
+      return { icon: <FileVideo {...iconProps} />, color: 'bg-indigo-500/10 text-indigo-500' };
+    }
+    
+    return { icon: <FileText {...iconProps} />, color: 'bg-slate-500/10 text-slate-500' };
+  };
 
   const getStatusStyles = (isSensitive) => {
     if (isSensitive) {
@@ -148,22 +207,34 @@ const AllDocumentsPage = () => {
         <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h1 className="text-3xl font-bold">All Documents</h1>
-              <p className="text-muted-foreground mt-1">Total of {documents.length} secure documents stored</p>
-            </div>
             <div className="flex items-center gap-3">
-              <div className="relative group hidden sm:block">
+              <div className="w-12 h-12 rounded-xl bg-primary-600/10 text-primary-500 flex items-center justify-center">
+                <FileText size={24} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold font-display">All Documents</h1>
+                <p className="text-muted-foreground mt-0.5 text-sm">Total of {documents.length} secure documents stored</p>
+              </div>
+            </div>
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
+              <div className="relative group w-full sm:w-auto">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary-500" size={18} />
                 <input 
                   type="text" 
                   placeholder="Search vault..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 w-72 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium placeholder-slate-400 dark:placeholder-slate-600"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      setSearchParams({ q: val });
+                    } else {
+                      setSearchParams({});
+                    }
+                  }}
+                  className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-100"
                 />
               </div>
-              <Button onClick={() => setIsUploadModalOpen(true)}>
+              <Button onClick={() => setIsUploadModalOpen(true)} className="xs:w-auto w-full">
                 <Plus size={18} className="mr-2" /> Upload File
               </Button>
             </div>
@@ -200,9 +271,14 @@ const AllDocumentsPage = () => {
                   className="glass bg-white dark:bg-slate-900/50 hover:bg-white/80 dark:hover:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-primary-500/30 p-6 rounded-[2.5rem] transition-all duration-300 group hover:shadow-2xl hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between mb-5">
-                    <div className="w-14 h-14 rounded-2xl bg-primary-500/10 text-primary-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <FileText size={26} />
-                    </div>
+                    {(() => {
+                      const fileIconObj = getFileIcon(doc.name);
+                      return (
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${fileIconObj.color}`}>
+                          {fileIconObj.icon}
+                        </div>
+                      );
+                    })()}
                     
                     {/* Tag badge */}
                     <span className="px-3.5 py-1.5 rounded-full text-xs font-semibold capitalize bg-primary-500/5 text-primary-500 border border-primary-500/10">
@@ -240,6 +316,7 @@ const AllDocumentsPage = () => {
                       >
                         <Download size={18} />
                       </button>
+                      {/*
                       <button 
                         onClick={() => openShare(doc)}
                         className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/40 hover:bg-purple-500/10 hover:text-purple-500 flex items-center justify-center transition-all text-slate-500 dark:text-slate-400"
@@ -247,6 +324,7 @@ const AllDocumentsPage = () => {
                       >
                         <Share2 size={18} />
                       </button>
+                      */}
                     </div>
                     
                     <div className="flex items-center gap-2">
@@ -280,7 +358,6 @@ const AllDocumentsPage = () => {
         document={selectedDoc}
         token={token}
         API_URL={API_URL}
-        onShare={openShare}
         onDelete={(docId) => handleDeleteDocument(docId, true)}
         onUpdate={fetchDocuments}
       />
