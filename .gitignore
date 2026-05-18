@@ -1,0 +1,42 @@
+# Dependency directories
+node_modules/
+frontend/node_modules/
+backend/venv/
+venv/
+env/
+.venv/
+
+# Environment configurations (Sensitive keys)
+.env
+backend/.env
+frontend/.env
+*.env.local
+
+# Databases & local storage
+*.db
+*.sqlite3
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Production builds
+frontend/dist/
+dist/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# System files
+.DS_Store
+Thumbs.db

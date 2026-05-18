@@ -1,0 +1,16 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Locker 24 DB",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "locker24",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "SSLCompressed": 0,
+      "PassFile": "",
+      "SSHTunnel": 0
+    }
+  }
+}
